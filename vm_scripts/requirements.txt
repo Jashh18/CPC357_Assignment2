@@ -1,0 +1,11 @@
+# IoT Smart Home System - Python Dependencies
+# GCP VM Requirements
+
+# Core IoT/MQTT
+paho-mqtt>=2.0.0
+
+# Web Dashboard
+Flask>=2.3.0
+
+# Database
+sqlite3  

@@ -1,0 +1,115 @@
+# ================================
+# CPC357 IoT Assignment - Git Ignore
+# ================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+pythonenv*
+
+# Database files
+*.db
+*.sqlite3
+*.sqlite
+smart_home.db  # Your IoT database
+weather.db     # If you created this earlier
+
+# Logs
+*.log
+logs/
+
+# Secrets and credentials
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+*.p8
+*.pk8
+*.der
+credentials.json
+service-account-key.json
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.vscode/settings.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# GCP/IoT specific
+gcp_credentials/
+*.pem  # Device certificates
+rsa_private.pem
+rsa_public.pem
+device_keys/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Documentation
+docs/_build/
+
+# Screenshots (optional - include if you don't want to track them)
+# docs/screenshots/*.png
+# !docs/screenshots/architecture.png  # Except this one
+
+# Assignment specific
+assignment_submission.pdf
+*.docx
+*.doc
+*.pages
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
