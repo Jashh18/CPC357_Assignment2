@@ -65,7 +65,6 @@ def generate_sensor_data():
         "air_status": air_status,
         "light_level": light_level,
         "timestamp": datetime.now().isoformat(),
-        "battery": round(random.uniform(85.0, 100.0), 1)  # Simulate battery
     }
 
 # ========= MAIN =========

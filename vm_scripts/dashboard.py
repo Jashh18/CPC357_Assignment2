@@ -12,8 +12,7 @@ def fetch_all_readings():
 
     cursor.execute("""
         SELECT device_id, room, temperature, humidity,
-               air_quality, air_status, light_level,
-               battery, timestamp
+               air_quality, air_status, light_level,timestamp
         FROM sensor_readings
         ORDER BY timestamp DESC
         LIMIT 50
@@ -86,7 +85,6 @@ HTML = """
             <th>AQI</th>
             <th>Status</th>
             <th>Light (lux)</th>
-            <th>Battery (%)</th>
         </tr>
     </thead>
     <tbody id="data-body">
@@ -128,7 +126,6 @@ function loadData() {
                             ${row.air_status}
                         </td>
                         <td>${row.light_level}</td>
-                        <td>${row.battery}</td>
                     </tr>
                 `;
             });

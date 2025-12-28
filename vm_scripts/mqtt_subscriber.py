@@ -22,7 +22,6 @@ def setup_database():
             air_quality REAL,
             air_status TEXT,
             light_level REAL,
-            battery REAL,
             timestamp DATETIME,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
@@ -118,8 +117,7 @@ def on_message(client, userdata, msg):
             cursor.execute('''
                 INSERT INTO sensor_readings (
                     device_id, room, temperature, humidity,
-                    air_quality, air_status, light_level,
-                    battery, timestamp
+                    air_quality, air_status, light_level, timestamp
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
@@ -130,7 +128,6 @@ def on_message(client, userdata, msg):
                 data.get('air_quality'),
                 data.get('air_status'),
                 data.get('light_level'),
-                data.get('battery'),
                 data.get('timestamp')
             ))
 
