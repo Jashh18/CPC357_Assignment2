@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 
 # ========= CONFIGURATION =========
-MQTT_SERVER = "136.116.214.222"  # ← REPLACE WITH YOUR VM IP
+MQTT_SERVER = "35.188.208.86"  # ← REPLACE WITH YOUR VM IP
 MQTT_PORT = 1883
 DEVICE_ID = "smart-home-sensor-01"
 ROOM = "living_room"
