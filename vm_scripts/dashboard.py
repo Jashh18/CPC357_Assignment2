@@ -138,7 +138,7 @@ function loadData() {
 }
 
 loadData();
-setInterval(loadData, 5000); // update every 5 seconds
+setInterval(loadData, 15000); // update every 5 seconds
 </script>
 
 </body>
