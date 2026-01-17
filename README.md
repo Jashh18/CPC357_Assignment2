@@ -45,10 +45,11 @@ git clone https://github.com/Jashh18/CPC357_Assignment2.git
 cd CPC357_Assignment2
 
 # Configure MQTT Broker
-sudo nano /etc/mosquitto/mosquitto.conf
+sudo nano /etc/mosquitto/conf.d/custom.conf
 # Add these lines:
-listener 1883
+listener 1883 0.0.0.0
 allow_anonymous true
+
 
 # Start Mosquitto
 sudo systemctl start mosquitto
