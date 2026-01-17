@@ -104,6 +104,24 @@ Open browser: `http://YOUR_VM_EXTERNAL_IP:8080`
 
 ---
 
+## Viewing the Database
+
+### Download Database File
+
+1. In your GCP SSH terminal, click **Download File**
+2. Enter the absolute path:
+```
+   /home/your_username/CPC357_Assignment2/vm_scripts/smart_home.db
+```
+
+### View Database Contents
+
+1. Go to **https://sqliteviewer.app/**
+2. Upload the downloaded `smart_home.db` file
+3. Explore the sensor readings and data
+
+---
+
 ## Group Members
 
 - **Tejashree Laxmi A/P Kanthan** - 163506
