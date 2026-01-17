@@ -1,4 +1,4 @@
-# IoT Smart Home System - Python Dependencies
+# CPC357 IoT Smart Home System - Python Dependencies
 # GCP VM Requirements
 
 # Core IoT/MQTT

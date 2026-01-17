@@ -1,3 +1,5 @@
+# This is our dashboard.py for our project
+
 from flask import Flask, jsonify, render_template, request
 import sqlite3
 from functools import lru_cache
@@ -6,22 +8,22 @@ import time
 app = Flask(__name__)
 DB_FILE = "smart_home.db"
 
-# Database connection function
+# Connect to our SQLite database
 def get_db_connection():
     conn = sqlite3.connect(DB_FILE, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    # Enable optimizations
+    conn.row_factory = sqlite3.Row  # So we can access columns by name
+    # These optimizations make queries faster
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
     conn.execute("PRAGMA cache_size=10000")
     return conn
 
-
-# Get all readings from database
+# Get all readings from database (limited to last 50 by default)
 def fetch_all_readings(limit=50):
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    # This query gets the readings and calculates temp_status
     cursor.execute("""
         SELECT 
             device_id,
@@ -47,11 +49,12 @@ def fetch_all_readings(limit=50):
     return rows
 
 
-# Get latest reading for each room
+# Get the latest reading for each room (for the room cards)
 def fetch_latest_by_room():
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    # This uses a window function to get only the most recent reading per room
     cursor.execute("""
         WITH ranked_readings AS (
             SELECT 
@@ -97,12 +100,13 @@ def fetch_latest_by_room():
     return rows
 
 
-# Cache stats for 30 seconds
+# Cache statistics for 30 seconds to reduce database load
 @lru_cache(maxsize=1)
 def get_room_stats_cached(cache_key):
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    # This calculates averages and counts for each room
     cursor.execute("""
         SELECT
             room,
@@ -122,60 +126,62 @@ def get_room_stats_cached(cache_key):
     return rows
 
 
-# Get room stats with caching
+# Get room statistics (uses cache to avoid hitting DB too often)
 def get_room_stats():
+    # Create a cache key that changes every 30 seconds
     cache_key = int(time.time() / 30)
     return get_room_stats_cached(cache_key)
 
 
-# Main dashboard page
+# Routes - these are the URLs that our browser can access
 @app.route("/")
 def index():
+    """Main dashboard page"""
     return render_template("dashboard.html")
 
 
-# API endpoint for readings history
 @app.route("/api/readings")
 def api_readings():
+    """API endpoint that returns reading history"""
     try:
         limit = int(request.args.get('limit', 50))
-        limit = min(limit, 100)
+        limit = min(limit, 100)  # Max 100 readings
         return jsonify(fetch_all_readings(limit))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-# API endpoint for latest reading per room
 @app.route("/api/latest")
 def api_latest():
+    """API endpoint for latest reading from each room"""
     try:
         return jsonify(fetch_latest_by_room())
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-# API endpoint for room statistics
 @app.route("/api/stats")
 def api_stats():
+    """API endpoint for room statistics"""
     try:
         return jsonify(get_room_stats())
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-# Create database indexes for better performance
+# Create database indexes to make queries faster
 def create_indexes():
     conn = get_db_connection()
     cursor = conn.cursor()
     
     try:
-        # Index for latest readings query
+        # Index for finding latest readings by room
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_room_timestamp 
             ON sensor_readings(room, timestamp DESC)
         """)
         
-        # Index for timestamp ordering
+        # Index for sorting by timestamp
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_timestamp 
             ON sensor_readings(timestamp DESC)
@@ -189,7 +195,7 @@ def create_indexes():
         conn.close()
 
 
-# Run the application
+# Start the Flask server
 if __name__ == "__main__":
     print("=" * 60)
     print("Smart Home Dashboard Server Starting...")
@@ -203,4 +209,5 @@ if __name__ == "__main__":
     print("Optimizations: Caching, Indexes, Lazy Loading")
     print("=" * 60)
 
+    # Run on all interfaces (0.0.0.0) so we can access from other computers
     app.run(host="0.0.0.0", port=8080, debug=False, threaded=True)

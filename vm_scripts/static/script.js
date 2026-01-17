@@ -1,11 +1,12 @@
-// Room icons for different rooms
+// This is our script.js for our project
+// Room icons - added emojis to make our page nicer
 const roomIcons = {
     'living_room': '🛋️',
     'kitchen': '🍳',
     'bedroom': '🛏️'
 };
 
-// Fetch with timeout to prevent hanging
+// Fetching with timeout - prevents the page from hanging if the server is slow
 function fetchWithTimeout(url, timeout = 5000) {
     return Promise.race([
         fetch(url),
@@ -15,18 +16,20 @@ function fetchWithTimeout(url, timeout = 5000) {
     ]);
 }
 
-// Load current room status cards
+// Loading current room status cards - this shows the latest reading from each room
 function loadRoomCards() {
     fetchWithTimeout('/api/latest', 3000)
         .then(res => res.json())
         .then(data => {
             const container = document.getElementById('room-cards');
             
+            // If there is no data available, there will be a message
             if (data.length === 0) {
                 container.innerHTML = '<div class="loading"><p>No room data available</p></div>';
                 return;
             }
 
+            // Building the HTML for each room card
             let html = '';
             for (let i = 0; i < data.length; i++) {
                 const room = data[i];
@@ -77,7 +80,7 @@ function loadRoomCards() {
         });
 }
 
-// Load statistics
+// Loads statistics - shows average values and counts per room
 function loadStats() {
     fetchWithTimeout('/api/stats', 3000)
         .then(res => res.json())
@@ -116,12 +119,8 @@ function loadStats() {
         });
 }
 
-// Load history table
-let historyLoaded = false;
-
+// Loads history table - shows the last 50 readings
 function loadHistory() {
-    if (historyLoaded) return;
-    
     fetchWithTimeout('/api/readings', 5000)
         .then(res => res.json())
         .then(data => {
@@ -150,7 +149,6 @@ function loadHistory() {
                 `;
             }
             tbody.innerHTML = html;
-            historyLoaded = true;
         })
         .catch(err => {
             console.error('Error loading history:', err);
@@ -159,59 +157,18 @@ function loadHistory() {
         });
 }
 
-// Update critical data only
-function updateCriticalData() {
+// Updates everything - room cards, stats, history, and timestamp
+function updateAllData() {
     loadRoomCards();
+    loadStats();
+    loadHistory();
     
     document.getElementById('last-update').innerHTML = 
         '<i class="fas fa-clock"></i> Last update: ' + new Date().toLocaleTimeString();
 }
 
-// Load all data on page load
-function loadAllData() {
-    loadRoomCards();
-    
-    setTimeout(function() {
-        loadStats();
-    }, 300);
-    
-    setTimeout(function() {
-        loadHistory();
-    }, 1000);
-    
-    document.getElementById('last-update').innerHTML = 
-        '<i class="fas fa-clock"></i> Last update: ' + new Date().toLocaleTimeString();
-}
+// Loads everything when page first loads
+updateAllData();
 
-// Lazy load history when user scrolls to it
-function setupLazyLoading() {
-    const historySection = document.querySelector('.history-section');
-    
-    const observer = new IntersectionObserver(function(entries) {
-        for (let i = 0; i < entries.length; i++) {
-            if (entries[i].isIntersecting && !historyLoaded) {
-                loadHistory();
-            }
-        }
-    }, { rootMargin: '100px' });
-    
-    observer.observe(historySection);
-}
-
-// Initialize everything when page loads
-loadAllData();
-setupLazyLoading();
-
-// Auto-refresh critical data every 15 seconds
-setInterval(updateCriticalData, 15000);
-
-// Refresh stats every 60 seconds
-setInterval(loadStats, 60000);
-
-// Refresh history every 2 minutes if it's been loaded
-setInterval(function() {
-    if (historyLoaded) {
-        historyLoaded = false;
-        loadHistory();
-    }
-}, 120000);
+// Auto-refresh everything every 15 seconds
+setInterval(updateAllData, 15000);

@@ -1,3 +1,5 @@
+# This is our mqtt_subscriber.py for our project
+
 import paho.mqtt.client as mqtt
 import json
 import sqlite3
@@ -5,13 +7,13 @@ from datetime import datetime
 import threading
 import time
 
-# ========= DATABASE SETUP =========
+# ========= OUR DATABASE SETUP =========
 def setup_database():
     """Create SQLite database with tables"""
-    conn = sqlite3.connect('smart_home.db')
+    conn = sqlite3.connect('smart_home.db') # Connect to our database file
     cursor = conn.cursor()
 
-    # Main readings table
+    # Create the main table for storing all our sensor readings
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS sensor_readings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,7 +29,7 @@ def setup_database():
         )
     ''')
 
-    # Alerts table (for abnormal readings)
+    # Create a separate table just for alerts
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS alerts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,16 +43,16 @@ def setup_database():
         )
     ''')
 
-    conn.commit()
-    conn.close()
+    conn.commit() # Save our changes
+    conn.close() # Close the connection
     print("Database setup complete")
 
-# ========= ALERT SYSTEM =========
+# ========= OUR ALERT SYSTEM =========
 def check_alerts(data):
     """Check for abnormal readings and create alerts"""
     alerts = []
 
-    # Temperature alerts
+    # Check if the temperature is too high or too low
     if data.get('temperature', 25) > 28:
         alerts.append({
             'type': 'HIGH_TEMPERATURE',
@@ -66,7 +68,7 @@ def check_alerts(data):
             'message': f"Low temperature detected: {data['temperature']}°C"
         })
 
-    # Air quality alerts
+    # Check if air quality is over 150
     if data.get('air_quality', 0) > 150:
         alerts.append({
             'type': 'POOR_AIR_QUALITY',
@@ -77,26 +79,27 @@ def check_alerts(data):
 
     return alerts
 
-# ========= MQTT CALLBACKS =========
+# ========= OUR MQTT CALLBACKS =========
 def on_connect(client, userdata, flags, rc, properties):
     print("Connected to MQTT Broker")
-    # Subscribe to all smart home topics
-    client.subscribe("smart-home/#")
+    client.subscribe("smart-home/#") # This line subscribe to everything under smart-home/ since we are using '#' symbol
     print("Subscribed to: smart-home/#")
 
 def on_message(client, userdata, msg):
     try:
+        # Convert the JSON message back into a Python dictionary
         data = json.loads(msg.payload.decode())
         print(f"Received [{msg.topic}]: {data}")
 
-        # Store in database
+        # Connect to our database
         conn = sqlite3.connect('smart_home.db')
         cursor = conn.cursor()
 
-        # If it's combined data (from TOPIC_ALL)
+        # Only process messages that have all the sensor data combined
         if 'room' in data:
             # Check for alerts
             alerts = check_alerts(data)
+            # If we found any alerts, save them to the alerts table
             for alert in alerts:
                 cursor.execute('''
                     INSERT INTO alerts (
@@ -113,7 +116,7 @@ def on_message(client, userdata, msg):
                 ))
                 print(f"ALERT: {alert['message']}")
 
-            # Insert into readings
+            # Save the sensor reading to our main table
             cursor.execute('''
                 INSERT INTO sensor_readings (
                     device_id, room, temperature, humidity,
@@ -131,27 +134,29 @@ def on_message(client, userdata, msg):
                 data.get('timestamp')
             ))
 
-            conn.commit()
+            conn.commit() # Save everythin to the database
             print("Data saved to database")
 
-        conn.close()
+        conn.close() # Close the database connection
 
     except Exception as e:
         print(f"ERROR: Failed to process message: {e}")
 
-# ========= STATISTICS THREAD =========
+# ========= OUR STATISTICS THREAD =========
 def print_statistics():
     """Print statistics every 30 seconds"""
     while True:
-        time.sleep(30)
+        time.sleep(30) # Wait 30 seconds
         try:
+            # Connect to database to get statistics
             conn = sqlite3.connect('smart_home.db')
             cursor = conn.cursor()
 
-            # Get counts
+            # Count total number of readings we've stored
             cursor.execute("SELECT COUNT(*) FROM sensor_readings")
             total_readings = cursor.fetchone()[0]
 
+            # Count total number of alerts we've recorded
             cursor.execute("SELECT COUNT(*) FROM alerts")
             total_alerts = cursor.fetchone()[0]
 
@@ -183,12 +188,12 @@ def print_statistics():
         except Exception as e:
             print(f"ERROR: Failed to generate statistics: {e}")
 
-# ========= MAIN =========
+# ========= OUR MAIN =========
 def main():
     print("Smart Home Data Processor")
     print("=" * 50)
 
-    # Setup database
+    # Setup database and tables
     setup_database()
 
     # Start statistics thread
@@ -198,7 +203,7 @@ def main():
     )
     stats_thread.start()
 
-    # Create MQTT client
+    # Create our MQTT client
     client = mqtt.Client(
         mqtt.CallbackAPIVersion.VERSION2,
         "data-processor"

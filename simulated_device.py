@@ -1,3 +1,5 @@
+# This is the simulated_device.py for our project
+
 import time
 import random
 import paho.mqtt.client as mqtt
@@ -5,15 +7,16 @@ import json
 from datetime import datetime
 import threading
 
-# ========= CONFIGURATION =========
-MQTT_SERVER = "104.198.187.107"  # REPLACE WITH YOUR EXTERNAL VM IP
+# ========= OUR CONFIGURATION PART =========
+MQTT_SERVER = "35.188.199.125"  # Do replace this with the new External VM IP everytime starting the VM
 MQTT_PORT = 1883
 
-# Define multiple rooms with their device IDs
+# We're defining multiple rooms with their device IDs
+# They also have different ranges because they behave differently in real life
 ROOMS = {
     "living_room": {
         "device_id": "smart-home-sensor-01",
-        "temp_range": (18.0, 26.0),  # Living room usually moderate
+        "temp_range": (18.0, 26.0),  # Living room usually have moderate temp
         "humidity_range": (40.0, 60.0),
     },
     "kitchen": {
@@ -28,20 +31,20 @@ ROOMS = {
     }
 }
 
-# ========= ALERT THRESHOLDS =========
+# ========= THE ALERT THRESHOLDS =========
 TEMP_HIGH_THRESHOLD = 28.0  # °C
 TEMP_LOW_THRESHOLD = 18.0   # °C
 AIR_QUALITY_THRESHOLD = 150.0  # AQI
 
-# ========= SENSOR SIMULATION =========
+# ========= OUR SENSOR SIMULATION =========
 def generate_sensor_data(room_name, room_config):
     """Generate realistic sensor readings with alert status for a specific room"""
     
-    # Temperature: Use room-specific range
+    # Generating a random temp within the room's typical range
     temp_min, temp_max = room_config["temp_range"]
     temperature = round(random.uniform(temp_min, temp_max), 1)
     
-    # Temperature Alert Status
+    # Check if the temperature is too high, too low, or normal
     if temperature > TEMP_HIGH_THRESHOLD:
         temp_status = "HIGH"
     elif temperature < TEMP_LOW_THRESHOLD:
@@ -49,15 +52,16 @@ def generate_sensor_data(room_name, room_config):
     else:
         temp_status = "NORMAL"
     
-    # Humidity: Use room-specific range
+    # Generating a random humidity but within the room's range
     humid_min, humid_max = room_config["humidity_range"]
     humidity = round(random.uniform(humid_min, humid_max), 1)
-    humidity_status = "NORMAL" # not specifically configured
+    humidity_status = "NORMAL" 
     
     # Air Quality: 0-500 (AQI scale)
-    # Kitchen has higher chance of poor air quality (cooking fumes)
+    # Kitchen has higher chance of poor air quality due to cooking fumes
     poor_air_chance = 0.3 if room_name == "kitchen" else 0.15
     
+    # Randomly decide if air quality is good or poor based on the room
     if random.random() > (1 - poor_air_chance):
         air_quality = round(random.uniform(150.0, 500.0), 1)
         air_status = "POOR"
@@ -65,11 +69,11 @@ def generate_sensor_data(room_name, room_config):
         air_quality = round(random.uniform(0.0, 150.0), 1)
         air_status = "GOOD"
     
-    # Light: 0-1000 lux (room-specific behavior)
+    # Light: 0-1000 lux, we check what time of day it is to make it realistic
     hour = datetime.now().hour
     
     if room_name == "bedroom":
-        # Bedroom: darker even during day, very dark at night
+        # Bedroom: dark even during day, very dark at night
         if 6 <= hour <= 18:
             light_level = round(random.uniform(100.0, 400.0), 1)
         else:
@@ -82,14 +86,14 @@ def generate_sensor_data(room_name, room_config):
             light_level = round(random.uniform(200.0, 600.0), 1)
         else:
             light_level = round(random.uniform(0.0, 100.0), 1)
-    else:  # living_room
-        # Living room: follows general daylight pattern
+    else:  # will be living_room
+        # Living room: follows normal daylight pattern
         if 6 <= hour <= 18:
             light_level = round(random.uniform(300.0, 1000.0), 1)
         else:
             light_level = round(random.uniform(50.0, 200.0), 1)
     
-    light_status = "NORMAL" # not specifically configured
+    light_status = "NORMAL" 
     
     return {
         "device_id": room_config["device_id"],
@@ -105,8 +109,9 @@ def generate_sensor_data(room_name, room_config):
         "timestamp": datetime.now().isoformat(),
     }
 
-# ========= ROOM SIMULATOR CLASS =========
+# ========= OUR ROOM SIMULATOR CLASS =========
 class RoomSimulator:
+    # Initialize the room with its name, config, and the MQTT client
     def __init__(self, room_name, room_config, mqtt_client):
         self.room_name = room_name
         self.room_config = room_config
@@ -114,7 +119,7 @@ class RoomSimulator:
         self.message_count = 0
         self.running = False
         
-        # MQTT Topics for this room
+        # Setting up MQTT topics for this room
         self.topics = {
             "temp": f"smart-home/{room_name}/temperature",
             "humid": f"smart-home/{room_name}/humidity",
@@ -125,9 +130,10 @@ class RoomSimulator:
     
     def publish_data(self):
         """Generate and publish sensor data for this room"""
+        # Getting the fake sensor data
         data = generate_sensor_data(self.room_name, self.room_config)
         
-        # Send individual sensor data
+        # Send individual sensor data to their specific topics
         self.client.publish(self.topics["temp"], json.dumps({
             "temperature": data["temperature"],
             "status": data["temp_status"]
@@ -145,10 +151,10 @@ class RoomSimulator:
             "status": data["light_status"]
         }))
         
-        # Send combined data
+        # Combining the datas and send to one topic
         self.client.publish(self.topics["all"], json.dumps(data))
         
-        # Display status
+        # Displaying the status
         temp_indicator = "[HIGH]" if data["temp_status"] == "HIGH" else "[LOW]" if data["temp_status"] == "LOW" else "[OK]"
         air_indicator = "[WARN]" if data["air_status"] == "POOR" else "[OK]"
         
@@ -159,14 +165,14 @@ class RoomSimulator:
               f"AQI: {air_indicator} {data['air_quality']:5}, "
               f"Light: {data['light_level']:5} lux")
         
-        self.message_count += 1
+        self.message_count += 1 # Increment our message counter
     
     def start(self):
         """Start publishing data every 15 seconds"""
         self.running = True
         while self.running:
-            self.publish_data()
-            time.sleep(15)
+            self.publish_data() # Sends the data
+            time.sleep(15) # Wait for 15 seconds before sending again
     
     def stop(self):
         """Stop publishing data"""
@@ -177,8 +183,9 @@ def create_mqtt_client():
     """Create and configure MQTT client"""
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, "smart-home-hub")
     
+    # This function runs when we successfully connect to the MQTT broker
     def on_connect(client, userdata, flags, rc, properties):
-        if rc == 0:
+        if rc == 0: # rc=0 means the connection successful
             print("Connected to MQTT Broker!")
             print(f"Simulating {len(ROOMS)} rooms: {', '.join(ROOMS.keys())}")
             print("="*80)
@@ -188,15 +195,15 @@ def create_mqtt_client():
     client.on_connect = on_connect
     return client
 
-# ========= MAIN =========
+# ========= OUR MAIN =========
 def main():
     print("Multi-Room Smart Home IoT Device Simulator")
     print("="*80)
     
-    # Create MQTT client
+    # Create our MQTT client
     client = create_mqtt_client()
     
-    # Connect to MQTT
+    # Connect to the MQTT
     try:
         client.connect(MQTT_SERVER, MQTT_PORT, 60)
     except Exception as e:
@@ -224,14 +231,14 @@ def main():
             thread = threading.Thread(target=simulator.start, daemon=True)
             thread.start()
             threads.append(thread)
-            time.sleep(0.5)  # Stagger the start slightly
+            time.sleep(0.5)  # Wait a bit between starting each room
         
-        # Keep main thread alive
+        # Keep the main thread alive
         while True:
             time.sleep(1)
             
     except KeyboardInterrupt:
-        print("\n\nStopping all room simulators...")
+        print("\n\nStopping all room simulators...") # When we run Ctrl+C
         
         # Stop all simulators
         for simulator in simulators:

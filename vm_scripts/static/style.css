@@ -1,10 +1,11 @@
-/* Basic styling for smart home dashboard */
-
+/* This is our style.css for our project */
+/* Basic page styling */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
+    background-color: #1a1a1a;
     margin: 0;
     padding: 20px;
+    color: #e0e0e0;
 }
 
 .container {
@@ -12,14 +13,15 @@ body {
     margin: 0 auto;
 }
 
-/* Header */
+/* Header section with title and last update time */
 .header {
-    background-color: #4CAF50;
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     color: white;
     padding: 20px;
     text-align: center;
     margin-bottom: 20px;
     border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
 .header h1 {
@@ -32,7 +34,7 @@ body {
 }
 
 .last-update {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.15);
     display: inline-block;
     padding: 5px 15px;
     border-radius: 3px;
@@ -40,7 +42,7 @@ body {
     font-size: 14px;
 }
 
-/* Room Cards */
+/* Room cards - these show current status for each room */
 .room-cards {
     display: flex;
     flex-wrap: wrap;
@@ -49,17 +51,17 @@ body {
 }
 
 .room-card {
-    background-color: white;
-    border: 1px solid #ddd;
+    background-color: #2d2d2d;
+    border: 1px solid #3d3d3d;
     border-radius: 5px;
     padding: 20px;
     flex: 1;
     min-width: 300px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
 .room-header {
-    border-bottom: 2px solid #eee;
+    border-bottom: 2px solid #444;
     padding-bottom: 10px;
     margin-bottom: 15px;
 }
@@ -78,17 +80,17 @@ body {
 .room-title h2 {
     margin: 0;
     font-size: 20px;
-    color: #333;
+    color: #f0f0f0;
     text-transform: capitalize;
 }
 
 .device-id {
     font-size: 12px;
-    color: #888;
+    color: #999;
     margin-top: 5px;
 }
 
-/* Sensor Grid */
+/* Sensor grid */
 .sensor-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -96,27 +98,27 @@ body {
 }
 
 .sensor-box {
-    background-color: #f9f9f9;
+    background-color: #252525;
     padding: 10px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #3d3d3d;
     border-radius: 3px;
     text-align: center;
 }
 
 .sensor-label {
     font-size: 12px;
-    color: #666;
+    color: #aaa;
     margin-bottom: 5px;
 }
 
 .sensor-value {
     font-size: 24px;
     font-weight: bold;
-    color: #333;
+    color: #f0f0f0;
     margin: 5px 0;
 }
 
-/* Status badges */
+/* Status badges - color-coded to show if readings are normal or not */
 .sensor-status {
     display: inline-block;
     padding: 3px 8px;
@@ -126,50 +128,52 @@ body {
 }
 
 .status-normal {
-    background-color: #90EE90;
-    color: #006400;
+    background-color: #27ae60;
+    color: #fff;
 }
 
 .status-high {
-    background-color: #FFB6C1;
-    color: #8B0000;
+    background-color: #e74c3c;
+    color: #fff;
 }
 
 .status-low {
-    background-color: #ADD8E6;
-    color: #00008B;
+    background-color: #3498db;
+    color: #fff;
 }
 
 .status-poor {
-    background-color: #FFE4B5;
-    color: #8B4513;
+    background-color: #e67e22;
+    color: #fff;
 }
 
 .status-good {
-    background-color: #90EE90;
-    color: #006400;
+    background-color: #27ae60;
+    color: #fff;
 }
 
 .value-alert {
-    background-color: #fff3cd;
+    background-color: #3d2a1f;
     padding: 2px 5px;
     border-radius: 3px;
+    color: #f39c12;
 }
 
-/* Statistics Section */
+/* Statistics section */
 .stats-section {
-    background-color: white;
-    border: 1px solid #ddd;
+    background-color: #2d2d2d;
+    border: 1px solid #3d3d3d;
     border-radius: 5px;
     padding: 20px;
     margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
 .stats-section h2 {
     margin-top: 0;
-    color: #333;
+    color: #f0f0f0;
     font-size: 22px;
-    border-bottom: 2px solid #4CAF50;
+    border-bottom: 2px solid #5dade2;
     padding-bottom: 10px;
 }
 
@@ -180,13 +184,14 @@ body {
 }
 
 .stat-card {
-    background-color: #4CAF50;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
     color: white;
     padding: 15px;
     border-radius: 5px;
     flex: 1;
     min-width: 200px;
     text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
 .stat-card h3 {
@@ -206,19 +211,20 @@ body {
     margin-bottom: 10px;
 }
 
-/* History Table */
+/* History table */
 .history-section {
-    background-color: white;
-    border: 1px solid #ddd;
+    background-color: #2d2d2d;
+    border: 1px solid #3d3d3d;
     border-radius: 5px;
     padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
 .history-section h2 {
     margin-top: 0;
-    color: #333;
+    color: #f0f0f0;
     font-size: 22px;
-    border-bottom: 2px solid #4CAF50;
+    border-bottom: 2px solid #5dade2;
     padding-bottom: 10px;
 }
 
@@ -233,7 +239,7 @@ table {
 }
 
 th {
-    background-color: #4CAF50;
+    background-color: #34495e;
     color: white;
     padding: 10px;
     text-align: left;
@@ -242,14 +248,19 @@ th {
 
 td {
     padding: 10px;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #3d3d3d;
+    color: #e0e0e0;
 }
 
 tr:nth-child(even) {
-    background-color: #f9f9f9;
+    background-color: #252525;
 }
 
-/* Room badges */
+tr:hover {
+    background-color: #333;
+}
+
+/* Room badges in the history table */
 .room-badge {
     display: inline-block;
     padding: 4px 8px;
@@ -260,30 +271,30 @@ tr:nth-child(even) {
 }
 
 .room-living_room {
-    background-color: #d1e7ff;
-    color: #004085;
+    background-color: #2980b9;
+    color: #fff;
 }
 
 .room-kitchen {
-    background-color: #fff3cd;
-    color: #856404;
+    background-color: #e67e22;
+    color: #fff;
 }
 
 .room-bedroom {
-    background-color: #f8d7da;
-    color: #721c24;
+    background-color: #8e44ad;
+    color: #fff;
 }
 
-/* Loading */
+/* Loading spinner */
 .loading {
     text-align: center;
     padding: 20px;
-    color: #666;
+    color: #999;
 }
 
 .spinner {
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #4CAF50;
+    border: 3px solid #3d3d3d;
+    border-top: 3px solid #3498db;
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -294,19 +305,4 @@ tr:nth-child(even) {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-}
-
-/* Mobile responsive */
-@media (max-width: 768px) {
-    .sensor-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .room-cards {
-        flex-direction: column;
-    }
-    
-    .stats-grid {
-        flex-direction: column;
-    }
 }
