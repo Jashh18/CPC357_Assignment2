@@ -43,7 +43,7 @@ def setup_database():
 
     conn.commit()
     conn.close()
-    print("✅ Database setup complete")
+    print("Database setup complete")
 
 # ========= ALERT SYSTEM =========
 def check_alerts(data):
@@ -79,15 +79,15 @@ def check_alerts(data):
 
 # ========= MQTT CALLBACKS =========
 def on_connect(client, userdata, flags, rc, properties):
-    print("✅ Connected to MQTT Broker")
+    print("Connected to MQTT Broker")
     # Subscribe to all smart home topics
     client.subscribe("smart-home/#")
-    print("📡 Subscribed to: smart-home/#")
+    print("Subscribed to: smart-home/#")
 
 def on_message(client, userdata, msg):
     try:
         data = json.loads(msg.payload.decode())
-        print(f"📥 [{msg.topic}]: {data}")
+        print(f"Received [{msg.topic}]: {data}")
 
         # Store in database
         conn = sqlite3.connect('smart_home.db')
@@ -111,7 +111,7 @@ def on_message(client, userdata, msg):
                     alert['message'],
                     data['timestamp']
                 ))
-                print(f"⚠️  Alert: {alert['message']}")
+                print(f"ALERT: {alert['message']}")
 
             # Insert into readings
             cursor.execute('''
@@ -119,7 +119,7 @@ def on_message(client, userdata, msg):
                     device_id, room, temperature, humidity,
                     air_quality, air_status, light_level, timestamp
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 data.get('device_id'),
                 data.get('room'),
@@ -132,12 +132,12 @@ def on_message(client, userdata, msg):
             ))
 
             conn.commit()
-            print("💾 Saved to database")
+            print("Data saved to database")
 
         conn.close()
 
     except Exception as e:
-        print(f"❌ Error processing message: {e}")
+        print(f"ERROR: Failed to process message: {e}")
 
 # ========= STATISTICS THREAD =========
 def print_statistics():
@@ -167,7 +167,7 @@ def print_statistics():
             conn.close()
 
             print("\n" + "=" * 50)
-            print("📊 SYSTEM STATISTICS")
+            print("SYSTEM STATISTICS")
             print("=" * 50)
             print(f"Total Readings: {total_readings}")
             print(f"Total Alerts: {total_alerts}")
@@ -181,11 +181,11 @@ def print_statistics():
             print("=" * 50 + "\n")
 
         except Exception as e:
-            print(f"❌ Error generating stats: {e}")
+            print(f"ERROR: Failed to generate statistics: {e}")
 
 # ========= MAIN =========
 def main():
-    print("🏠 Smart Home Data Processor")
+    print("Smart Home Data Processor")
     print("=" * 50)
 
     # Setup database
@@ -210,10 +210,10 @@ def main():
     try:
         client.connect("localhost", 1883, 60)
     except Exception as e:
-        print(f"❌ Cannot connect to MQTT broker: {e}")
+        print(f"ERROR: Cannot connect to MQTT broker: {e}")
         return
 
-    print("🔄 Starting MQTT listener...")
+    print("Starting MQTT listener...")
     client.loop_forever()
 
 if __name__ == "__main__":

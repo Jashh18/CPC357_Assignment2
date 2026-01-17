@@ -1,161 +1,206 @@
-from flask import Flask, jsonify, render_template_string
+from flask import Flask, jsonify, render_template, request
 import sqlite3
+from functools import lru_cache
+import time
 
 app = Flask(__name__)
 DB_FILE = "smart_home.db"
 
-# ========= DATABASE HELPER =========
-def fetch_all_readings():
-    conn = sqlite3.connect(DB_FILE)
+# Database connection function
+def get_db_connection():
+    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
     conn.row_factory = sqlite3.Row
+    # Enable optimizations
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA cache_size=10000")
+    return conn
+
+
+# Get all readings from database
+def fetch_all_readings(limit=50):
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT device_id, room, temperature, humidity,
-               air_quality, air_status, light_level,timestamp
+        SELECT 
+            device_id,
+            room,
+            temperature,
+            humidity,
+            air_quality,
+            air_status,
+            light_level,
+            timestamp,
+            CASE 
+                WHEN temperature > 28 THEN 'HIGH'
+                WHEN temperature < 18 THEN 'LOW'
+                ELSE 'NORMAL'
+            END as temp_status
         FROM sensor_readings
         ORDER BY timestamp DESC
-        LIMIT 50
+        LIMIT ?
+    """, (limit,))
+
+    rows = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return rows
+
+
+# Get latest reading for each room
+def fetch_latest_by_room():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        WITH ranked_readings AS (
+            SELECT 
+                device_id,
+                room,
+                temperature,
+                humidity,
+                air_quality,
+                air_status,
+                light_level,
+                timestamp,
+                CASE 
+                    WHEN temperature > 28 THEN 'HIGH'
+                    WHEN temperature < 18 THEN 'LOW'
+                    ELSE 'NORMAL'
+                END as temp_status,
+                CASE 
+                    WHEN humidity > 60 THEN 'HIGH'
+                    WHEN humidity < 30 THEN 'LOW'
+                    ELSE 'NORMAL'
+                END as humidity_status,
+                ROW_NUMBER() OVER (PARTITION BY room ORDER BY timestamp DESC) as rn
+            FROM sensor_readings
+        )
+        SELECT 
+            device_id,
+            room,
+            temperature,
+            humidity,
+            air_quality,
+            air_status,
+            light_level,
+            timestamp,
+            temp_status,
+            humidity_status
+        FROM ranked_readings
+        WHERE rn = 1
+        ORDER BY room
     """)
 
     rows = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return rows
 
-# ========= HTML =========
-HTML = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Smart Home Dashboard</title>
-    <meta charset="utf-8">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-        }
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-            text-align: center;
-        }
-        th {
-            background: #2c7be5;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background: #f9f9f9;
-        }
-        .status-good {
-            color: green;
-            font-weight: bold;
-        }
-        .status-poor {
-            color: red;
-            font-weight: bold;
-        }
-        #last-update {
-            margin: 10px 0;
-            color: #555;
-        }
-    </style>
-</head>
-<body>
 
-<h1>Smart Home Sensor Dashboard</h1>
-<div id="last-update">Last update: --</div>
+# Cache stats for 30 seconds
+@lru_cache(maxsize=1)
+def get_room_stats_cached(cache_key):
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-<table>
-    <thead>
-        <tr>
-            <th>Time</th>
-            <th>Device</th>
-            <th>Room</th>
-            <th>Temp (°C)</th>
-            <th>Humidity (%)</th>
-            <th>AQI</th>
-            <th>Status</th>
-            <th>Light (lux)</th>
-        </tr>
-    </thead>
-    <tbody id="data-body">
-        <tr>
-            <td colspan="9">Waiting for data...</td>
-        </tr>
-    </tbody>
-</table>
+    cursor.execute("""
+        SELECT
+            room,
+            COUNT(*) AS total_readings,
+            ROUND(AVG(temperature), 2) AS avg_temp,
+            ROUND(AVG(humidity), 2) AS avg_humidity,
+            ROUND(AVG(air_quality), 2) AS avg_air_quality,
+            SUM(CASE WHEN temperature > 28 OR temperature < 18 THEN 1 ELSE 0 END) AS temp_alerts,
+            SUM(CASE WHEN air_status = 'POOR' THEN 1 ELSE 0 END) AS air_alerts
+        FROM sensor_readings
+        GROUP BY room
+        ORDER BY room
+    """)
 
-<script>
-function loadData() {
-    fetch("/api/readings")
-        .then(res => res.json())
-        .then(data => {
-            const body = document.getElementById("data-body");
-            body.innerHTML = "";
+    rows = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return rows
 
-            if (data.length === 0) {
-                body.innerHTML =
-                    "<tr><td colspan='9'>No data yet</td></tr>";
-                return;
-            }
 
-            data.forEach(row => {
-                const statusClass =
-                    row.air_status === "GOOD"
-                        ? "status-good"
-                        : "status-poor";
+# Get room stats with caching
+def get_room_stats():
+    cache_key = int(time.time() / 30)
+    return get_room_stats_cached(cache_key)
 
-                body.innerHTML += `
-                    <tr>
-                        <td>${row.timestamp}</td>
-                        <td>${row.device_id}</td>
-                        <td>${row.room}</td>
-                        <td>${row.temperature}</td>
-                        <td>${row.humidity}</td>
-                        <td>${row.air_quality}</td>
-                        <td class="${statusClass}">
-                            ${row.air_status}
-                        </td>
-                        <td>${row.light_level}</td>
-                    </tr>
-                `;
-            });
 
-            document.getElementById("last-update").innerText =
-                "Last update: " +
-                new Date().toLocaleTimeString();
-        })
-        .catch(err => console.error(err));
-}
-
-loadData();
-setInterval(loadData, 15000); // update every 5 seconds
-</script>
-
-</body>
-</html>
-"""
-
-# ========= ROUTES =========
+# Main dashboard page
 @app.route("/")
 def index():
-    return render_template_string(HTML)
+    return render_template("dashboard.html")
 
+
+# API endpoint for readings history
 @app.route("/api/readings")
 def api_readings():
-    return jsonify(fetch_all_readings())
+    try:
+        limit = int(request.args.get('limit', 50))
+        limit = min(limit, 100)
+        return jsonify(fetch_all_readings(limit))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-# ========= MAIN =========
+
+# API endpoint for latest reading per room
+@app.route("/api/latest")
+def api_latest():
+    try:
+        return jsonify(fetch_latest_by_room())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# API endpoint for room statistics
+@app.route("/api/stats")
+def api_stats():
+    try:
+        return jsonify(get_room_stats())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Create database indexes for better performance
+def create_indexes():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Index for latest readings query
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_room_timestamp 
+            ON sensor_readings(room, timestamp DESC)
+        """)
+        
+        # Index for timestamp ordering
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_timestamp 
+            ON sensor_readings(timestamp DESC)
+        """)
+        
+        conn.commit()
+        print("Database indexes created successfully")
+    except Exception as e:
+        print(f"Index creation warning: {e}")
+    finally:
+        conn.close()
+
+
+# Run the application
 if __name__ == "__main__":
-    print("Smart Home Dashboard running")
-    print("Open: http://YOUR_VM_IP:8081")
-    app.run(host="0.0.0.0", port=8081, debug=False)
+    print("=" * 60)
+    print("Smart Home Dashboard Server Starting...")
+    print("=" * 60)
+    
+    create_indexes()
+    
+    print("Dashboard URL: http://<VM_EXTERNAL_IP>:8080")
+    print("Auto-refresh: Every 15 seconds (critical data)")
+    print("Monitoring: Living Room, Kitchen, Bedroom")
+    print("Optimizations: Caching, Indexes, Lazy Loading")
+    print("=" * 60)
+
+    app.run(host="0.0.0.0", port=8080, debug=False, threaded=True)

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Environmental Monitor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1><i class="fas fa-home"></i> Smart Home Environmental Monitor</h1>
+        <p>Real-time monitoring across multiple rooms</p>
+        <div class="last-update" id="last-update">
+            <i class="fas fa-clock"></i> Initializing...
+        </div>
+    </div>
+
+    <!-- Current Room Status Cards -->
+    <div id="room-cards" class="room-cards">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading room data...</p>
+        </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="stats-section">
+        <h2><i class="fas fa-chart-bar"></i> Room Statistics</h2>
+        <div id="stats-grid" class="stats-grid">
+            <div class="loading">
+                <p>Loading statistics...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Table -->
+    <div class="history-section">
+        <h2><i class="fas fa-history"></i> Recent Readings History</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Room</th>
+                        <th>Device ID</th>
+                        <th>Temp (°C)</th>
+                        <th>Status</th>
+                        <th>Humidity (%)</th>
+                        <th>AQI</th>
+                        <th>Status</th>
+                        <th>Light (lux)</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <tr>
+                        <td colspan="9" class="loading">Loading history...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
